@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useState } from "react";
 import { TokenList } from "./TokenList";
-import { Pair, Percent, Route, Token, TokenAmount, Trade, TradeType, WETH } from "@uniswap/sdk";
+import { Pair, Percent, Route, Token, TokenAmount, Trade, TradeType } from "@uniswap/sdk";
 import IUniswapV2Pair from "@uniswap/v2-core/build/IUniswapV2Pair.json";
 import { Modal } from "antd";
 import { ethers } from "ethers";
@@ -16,8 +16,18 @@ import { notification } from "~~/utils/scaffold-eth";
 export const SwapComponent = ({ title }: { title: string }) => {
   // states
   const [amountToSwap, setAmountToSwap] = useState<number>(0);
-  const [tokenIn, setTokenIn] = useState<{ name?: string; symbol?: string; address?: string; decimals?: string }>({});
-  const [tokenOut, setTokenOut] = useState<{ name?: string; symbol?: string; address?: string; decimals?: string }>({});
+  const [tokenIn, setTokenIn] = useState<{
+    name?: string;
+    symbol?: string;
+    address?: `0x${string}`;
+    decimals?: number;
+  }>({});
+  const [tokenOut, setTokenOut] = useState<{
+    name?: string;
+    symbol?: string;
+    address?: `0x${string}`;
+    decimals?: number;
+  }>({});
   const [open, setOpen] = useState(false);
   const [confirmLoading] = useState(false);
   const [slippage] = useState(1);
@@ -85,23 +95,30 @@ export const SwapComponent = ({ title }: { title: string }) => {
         return;
       }
 
+      if (tokenIn.symbol == undefined || tokenIn.address == undefined || tokenIn.decimals == undefined) {
+        notification.error("Please select to swap.");
+        return;
+      }
+      if (tokenOut.symbol == undefined || tokenOut.address == undefined || tokenOut.decimals == undefined) {
+        notification.error("Please select to swap.");
+        return;
+      }
+
       let amountInWei;
       let tokenSendIn, tokenSendOut;
 
-      const chainId: 1 | 3 | 4 | 5 | 42 = chain.id || 1;
-
       if (tokenIn?.symbol.toLowerCase() == "eth") {
-        tokenSendIn = WETH[chainId] || new Token(chain.id, "0xD0dF82dE051244f04BfF3A8bB1f62E1cD39eED92", 18);
+        tokenSendIn = new Token(chain.id, "0xD0dF82dE051244f04BfF3A8bB1f62E1cD39eED92", 18);
         amountInWei = ethers.parseEther(amountToSwap.toString());
       } else {
-        tokenSendIn = new Token(chain.id, tokenIn?.address, tokenIn?.decimals);
-        amountInWei = ethers.parseUnits(amountToSwap.toString(), tokenIn?.decimals);
+        tokenSendIn = new Token(chain.id, tokenIn?.address, Number(tokenIn?.decimals));
+        amountInWei = ethers.parseUnits(amountToSwap.toString(), Number(tokenIn?.decimals));
       }
 
       if (tokenOut?.symbol?.toLowerCase() == "eth") {
-        tokenSendOut = WETH[chainId] || new Token(chain.id, "0xD0dF82dE051244f04BfF3A8bB1f62E1cD39eED92", 18);
+        tokenSendOut = new Token(chain.id, "0xD0dF82dE051244f04BfF3A8bB1f62E1cD39eED92", 18);
       } else {
-        tokenSendOut = new Token(chain.id, tokenOut?.address, tokenOut?.decimals);
+        tokenSendOut = new Token(chain.id, tokenOut?.address, Number(tokenOut?.decimals));
       }
 
       const reserve: any = await provider.readContract({
@@ -115,6 +132,7 @@ export const SwapComponent = ({ title }: { title: string }) => {
       const pair = new Pair(new TokenAmount(tokenSendIn, balances[0]), new TokenAmount(tokenSendOut, balances[1]));
 
       const route = new Route([pair], tokenSendIn);
+      console.log(route);
 
       const trade = new Trade(route, new TokenAmount(tokenSendIn, amountInWei), TradeType.EXACT_INPUT);
 
@@ -141,7 +159,7 @@ export const SwapComponent = ({ title }: { title: string }) => {
         swapTx = await uniswapRouter.swapExactTokensForETH(
           String(amountInWei),
           String(amountOutMin),
-          [tokenIn.address, WETH[chainId].address, tokenOut.address],
+          [tokenIn.address, tokenIn.address, tokenOut.address],
           provider.account,
           Math.floor(Date.now() / 1000) + 1000, // Set a deadline for the transaction
         );
@@ -174,8 +192,12 @@ export const SwapComponent = ({ title }: { title: string }) => {
   };
 
   const handleApproval = async () => {
+    if (chain == undefined) {
+      notification.error("ChainId not available");
+    }
+
     const hash = await walletClient?.writeContract({
-      address: tokenIn.address || new Token(chain.id, "0xD0dF82dE051244f04BfF3A8bB1f62E1cD39eED92", 18),
+      address: tokenIn.address || `0xD0dF82dE051244f04BfF3A8bB1f62E1cD39eED92`,
       abi: erc20ABI,
       functionName: "approve",
       args: [uniswapRouterAddress, ethers.parseUnits(amountToSwap.toString(), tokenIn?.decimals)],
@@ -205,7 +227,7 @@ export const SwapComponent = ({ title }: { title: string }) => {
   };
 
   const handleSearchToken = async (address: `0x${string}`) => {
-    if (address == "") return;
+    if (address.slice(2).length === 0) return;
 
     const notificationId = notification.loading("Loading Address Details");
     try {
@@ -234,6 +256,10 @@ export const SwapComponent = ({ title }: { title: string }) => {
 
   const handleAllowanceCheck = async () => {
     if (!tokenIn.address || !isReady) return;
+    if (walletClient?.account.address == undefined) {
+      notification.error("Wallet account not found");
+      return;
+    }
     const allowance: any = await provider.readContract({
       address: tokenIn.address || "0xD0dF82dE051244f04BfF3A8bB1f62E1cD39eED92",
       abi: erc20ABI,
@@ -481,7 +507,11 @@ export const SwapComponent = ({ title }: { title: string }) => {
                 className="sc-1xp9ndq-2 jkLNrG"
                 onChange={e => {
                   setAddressSearchInput(e.target.value);
-                  handleSearchToken(e.target.value);
+                  const cleanValue = e.target.value.startsWith("0x") ? e.target.value.slice(2) : e.target.value;
+
+                  // Add the "0x" prefix to the cleanValue
+                  const convertedValue: `0x${string}` = `0x${cleanValue}`;
+                  handleSearchToken(convertedValue);
                 }}
                 value={addressSearchInput}
               />

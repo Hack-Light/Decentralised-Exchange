@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useState } from "react";
 import { TokenList } from "./TokenList";
-import { Token, WETH } from "@uniswap/sdk";
+import { Token } from "@uniswap/sdk";
 import IUniswapV2Factory from "@uniswap/v2-core/build/IUniswapV2Factory.json";
 import { Modal } from "antd";
 import { ethers } from "ethers";
@@ -15,10 +15,10 @@ import { notification } from "~~/utils/scaffold-eth";
 
 export const LiquidityComponent = ({ title }: { title: string }) => {
   // states
-  const [firstInputAmount, setFirstInputAmount] = useState(0);
-  const [secondInputAmount, setSecondInputAmount] = useState(0);
-  const [tokenIn, setTokenIn] = useState<{ name?: string; symbol?: string; address?: string; decimals?: string }>({});
-  const [tokenOut, setTokenOut] = useState<{ name?: string; symbol?: string; address?: string; decimals?: string }>({});
+  const [firstInputAmount, setFirstInputAmount] = useState<any>(0);
+  const [secondInputAmount, setSecondInputAmount] = useState<any>(0);
+  const [tokenIn, setTokenIn] = useState<any>({});
+  const [tokenOut, setTokenOut] = useState<any>({});
   const [open, setOpen] = useState(false);
   const [confirmLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -97,23 +97,30 @@ export const LiquidityComponent = ({ title }: { title: string }) => {
         return;
       }
 
+      if (tokenIn.symbol == undefined || tokenIn.address == undefined || tokenIn.decimals == undefined) {
+        notification.error("Please select to add.");
+        return;
+      }
+      if (tokenOut.symbol == undefined || tokenOut.address == undefined || tokenOut.decimals == undefined) {
+        notification.error("Please select to add.");
+        return;
+      }
+
       let tokenSendIn, tokenSendOut, tokenSendInAmount, tokenSendOutAmount;
 
-      const chainId: 1 | 3 | 4 | 5 | 42 = chain.id || 1;
-
       if (tokenIn?.symbol.toLowerCase() == "eth") {
-        tokenSendIn = WETH[chainId] || new Token(chain.id, "0x9fb0fC75cC6966f80793d05b1f2336368aa7D4B2", 18);
+        tokenSendIn = new Token(chain.id, "0x9fb0fC75cC6966f80793d05b1f2336368aa7D4B2", 18);
         tokenSendInAmount = ethers.parseEther(firstInputAmount.toString());
       } else {
-        tokenSendIn = new Token(chain.id, tokenIn?.address, tokenIn?.decimals);
+        tokenSendIn = new Token(chain.id, tokenIn?.address, Number(tokenIn?.decimals));
         tokenSendInAmount = ethers.parseUnits(firstInputAmount.toString(), tokenIn?.decimals);
       }
 
       if (tokenOut?.symbol?.toLowerCase() == "eth") {
-        tokenSendOut = WETH[chainId] || new Token(chain.id, "0x9fb0fC75cC6966f80793d05b1f2336368aa7D4B2", 18);
+        tokenSendOut = new Token(chain.id, "0x9fb0fC75cC6966f80793d05b1f2336368aa7D4B2", 18);
         tokenSendOutAmount = ethers.parseEther(secondInputAmount.toString());
       } else {
-        tokenSendOut = new Token(chain.id, tokenOut?.address, tokenOut?.decimals);
+        tokenSendOut = new Token(chain.id, tokenOut?.address, Number(tokenOut?.decimals));
         tokenSendOutAmount = ethers.parseUnits(secondInputAmount.toString(), tokenIn?.decimals);
       }
 
@@ -141,10 +148,8 @@ export const LiquidityComponent = ({ title }: { title: string }) => {
   };
 
   const handleApproval = async () => {
-    console.log("firstInputAmount", firstInputAmount, secondInputAmount);
-
     await walletClient?.writeContract({
-      address: tokenIn.address || new Token(chain.id, "0x9fb0fC75cC6966f80793d05b1f2336368aa7D4B2", 18),
+      address: tokenIn.address || `0x9fb0fC75cC6966f80793d05b1f2336368aa7D4B2`,
       abi: erc20ABI,
       functionName: "approve",
       args: [uniswapRouterAddress, ethers.parseUnits(firstInputAmount.toString(), tokenIn?.decimals)],
@@ -153,7 +158,7 @@ export const LiquidityComponent = ({ title }: { title: string }) => {
     notification.info(`Approval tx for ${tokenIn.symbol} sent`);
 
     const hash2 = await walletClient?.writeContract({
-      address: tokenOut.address || new Token(chain.id, "0x9fb0fC75cC6966f80793d05b1f2336368aa7D4B2", 18),
+      address: tokenOut.address || "0x9fb0fC75cC6966f80793d05b1f2336368aa7D4B2",
       abi: erc20ABI,
       functionName: "approve",
       args: [uniswapRouterAddress, ethers.parseUnits(secondInputAmount.toString(), tokenOut?.decimals)],
@@ -184,7 +189,7 @@ export const LiquidityComponent = ({ title }: { title: string }) => {
   };
 
   const handleSearchToken = async (address: `0x${string}`) => {
-    if (address == "") return;
+    if (address.slice(2).length === 0) return;
 
     const notificationId = notification.loading("Loading Address Details");
     try {
@@ -267,14 +272,20 @@ export const LiquidityComponent = ({ title }: { title: string }) => {
       let input1Balance;
 
       if (dFirstInptAmount) {
-        input1Balance = await getBalance(tokenIn?.address);
+        if (tokenIn?.address == undefined || tokenIn?.address.slice(2).length === 0) return;
+        const cleanValue = tokenIn?.address.startsWith("0x") ? tokenIn?.address.slice(2) : tokenIn?.address;
+        const convertedValue: `0x${string}` = `0x${cleanValue}`;
+        input1Balance = await getBalance(convertedValue);
       } else {
         input1Balance = 0;
       }
       let input2Balance;
 
       if (dSecondInputAmount) {
-        input2Balance = await getBalance(tokenOut?.address);
+        if (tokenOut?.address == undefined || tokenOut?.address.slice(2).length === 0) return;
+        const cleanValue = tokenOut?.address.startsWith("0x") ? tokenOut?.address.slice(2) : tokenOut?.address;
+        const convertedValue: `0x${string}` = `0x${cleanValue}`;
+        input2Balance = await getBalance(convertedValue);
       } else {
         input2Balance = 0;
       }
@@ -452,7 +463,11 @@ export const LiquidityComponent = ({ title }: { title: string }) => {
                 className="sc-1xp9ndq-2 jkLNrG"
                 onChange={e => {
                   setAddressSearchInput(e.target.value);
-                  handleSearchToken(e.target.value);
+                  const cleanValue = e.target.value.startsWith("0x") ? e.target.value.slice(2) : e.target.value;
+
+                  // Add the "0x" prefix to the cleanValue
+                  const convertedValue: `0x${string}` = `0x${cleanValue}`;
+                  handleSearchToken(convertedValue);
                 }}
                 value={addressSearchInput}
               />
