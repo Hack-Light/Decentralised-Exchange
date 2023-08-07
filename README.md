@@ -2,6 +2,8 @@
 
 LiteSwap is a decentralized exchange (Dex) built on the Sepolia Network. With LiteSwap, users have the ability to create token pairs, provide liquidity to the pool, and seamlessly trade tokens with ease.
 
+Visit [here](https://dex-aedeg2ddb-hacklight.vercel.app/) for demo
+
 ## Pages
 
 ### Page 1 (Home/Swap Page)
