@@ -20,8 +20,11 @@ export const AddressInput = ({ value, name, placeholder, onChange }: CommonInput
   });
 
   const [enteredEnsName, setEnteredEnsName] = useState<string>();
+
+  const cleanValue = value.startsWith("0x") ? value.slice(2) : value;
+  const convertedValue: `0x${string}` = `0x${cleanValue}`;
   const { data: ensName, isLoading: isEnsNameLoading } = useEnsName({
-    address: value,
+    address: convertedValue,
     enabled: isAddress(value),
     chainId: 1,
     cacheTime: 30_000,
@@ -56,7 +59,7 @@ export const AddressInput = ({ value, name, placeholder, onChange }: CommonInput
       name={name}
       placeholder={placeholder}
       error={ensAddress === null}
-      value={value}
+      value={convertedValue}
       onChange={handleChange}
       disabled={isEnsAddressLoading || isEnsNameLoading}
       prefix={

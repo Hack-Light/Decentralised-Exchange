@@ -9,7 +9,7 @@ const BLOCKS_PER_PAGE = 20;
 export const useFetchBlocks = () => {
   const client = usePublicClient({ chainId: hardhat.id });
 
-  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [blocks, setBlocks] = useState<any>([]);
   const [transactionReceipts, setTransactionReceipts] = useState<{
     [key: string]: TransactionReceipt;
   }>({});

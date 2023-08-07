@@ -166,6 +166,7 @@ export const SwapComponent = ({ title }: { title: string }) => {
       } else {
         swapTx = await walletClient?.writeContract({
           address: "0xC532a74256D3Db42D0Bf7a0400fEFDbad7694008",
+          chain: walletClient.chain,
           abi: uniswapRouterABI,
           functionName: "swapExactTokensForTokens",
           account: walletClient.account.address,
@@ -198,6 +199,7 @@ export const SwapComponent = ({ title }: { title: string }) => {
 
     const hash = await walletClient?.writeContract({
       address: tokenIn.address || `0xD0dF82dE051244f04BfF3A8bB1f62E1cD39eED92`,
+      chain: walletClient.chain,
       abi: erc20ABI,
       functionName: "approve",
       args: [uniswapRouterAddress, ethers.parseUnits(amountToSwap.toString(), tokenIn?.decimals)],

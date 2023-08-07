@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Address, Log } from "viem";
+import { Address, BlockTag, Log } from "viem";
 import { usePublicClient } from "wagmi";
 
 export const useContractLogs = (address: Address) => {
   const [logs, setLogs] = useState<Log[]>([]);
   const client = usePublicClient();
+
+  const myBlockTag: BlockTag = "latest";
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -12,7 +14,7 @@ export const useContractLogs = (address: Address) => {
         const existingLogs = await client.getLogs({
           address: address,
           fromBlock: 0n,
-          toBlock: "latest",
+          toBlock: myBlockTag,
         });
         setLogs(existingLogs);
       } catch (error) {
@@ -26,7 +28,7 @@ export const useContractLogs = (address: Address) => {
         const newLogs = await client.getLogs({
           address: address,
           fromBlock: prevBlockNumber,
-          toBlock: "latest",
+          toBlock: myBlockTag,
         });
         setLogs(prevLogs => [...prevLogs, ...newLogs]);
       },

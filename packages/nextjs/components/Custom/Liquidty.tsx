@@ -65,6 +65,7 @@ export const LiquidityComponent = ({ title }: { title: string }) => {
     try {
       const hx = await walletClient?.writeContract({
         address: uniswapRouterAddress,
+        chain: walletClient.chain,
         abi: uniswapRouterABI,
         functionName: "addLiquidity",
         args: [
@@ -134,6 +135,7 @@ export const LiquidityComponent = ({ title }: { title: string }) => {
 
       const createPairTxHash = await walletClient?.writeContract({
         address: "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
+        chain: walletClient.chain,
         abi: IUniswapV2Factory.abi,
         functionName: "createPair",
         args: [tokenSendIn.address, tokenSendOut.address],
@@ -150,6 +152,7 @@ export const LiquidityComponent = ({ title }: { title: string }) => {
   const handleApproval = async () => {
     await walletClient?.writeContract({
       address: tokenIn.address || `0x9fb0fC75cC6966f80793d05b1f2336368aa7D4B2`,
+      chain: walletClient.chain,
       abi: erc20ABI,
       functionName: "approve",
       args: [uniswapRouterAddress, ethers.parseUnits(firstInputAmount.toString(), tokenIn?.decimals)],
@@ -159,6 +162,7 @@ export const LiquidityComponent = ({ title }: { title: string }) => {
 
     const hash2 = await walletClient?.writeContract({
       address: tokenOut.address || "0x9fb0fC75cC6966f80793d05b1f2336368aa7D4B2",
+      chain: walletClient.chain,
       abi: erc20ABI,
       functionName: "approve",
       args: [uniswapRouterAddress, ethers.parseUnits(secondInputAmount.toString(), tokenOut?.decimals)],

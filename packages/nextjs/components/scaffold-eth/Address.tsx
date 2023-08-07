@@ -33,7 +33,14 @@ export const Address = ({ address, disableAddressLink, format, size = "base" }: 
   const [ensAvatar, setEnsAvatar] = useState<string | null>();
   const [addressCopied, setAddressCopied] = useState(false);
 
-  const { data: fetchedEns } = useEnsName({ address, enabled: isAddress(address ?? ""), chainId: 1 });
+  if (address === undefined) {
+    address = `0x00`;
+  }
+
+  const cleanValue = address.startsWith("0x") ? address.slice(2) : address;
+  const convertedValue: `0x${string}` = `0x${cleanValue}`;
+
+  const { data: fetchedEns } = useEnsName({ address: convertedValue, enabled: isAddress(address ?? ""), chainId: 1 });
   const { data: fetchedEnsAvatar } = useEnsAvatar({
     name: fetchedEns,
     enabled: Boolean(fetchedEns),

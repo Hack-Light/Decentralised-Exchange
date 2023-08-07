@@ -115,7 +115,11 @@ export const Faucet = () => {
               <AddressInput
                 placeholder="Destination Address"
                 value={inputAddress ?? ""}
-                onChange={value => setInputAddress(value)}
+                onChange={value => {
+                  const cleanValue = value.startsWith("0x") ? value.slice(2) : value;
+                  const convertedValue: `0x${string}` = `0x${cleanValue}`;
+                  setInputAddress(convertedValue);
+                }}
               />
               <EtherInput placeholder="Amount to send" value={sendValue} onChange={value => setSendValue(value)} />
               <button

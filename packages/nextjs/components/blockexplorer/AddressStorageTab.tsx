@@ -17,8 +17,13 @@ export const AddressStorageTab = ({ address }: { address: string }) => {
         let idx = 0;
 
         while (true) {
+          const cleanValue = address.startsWith("0x") ? address.slice(2) : address;
+
+          // Add the "0x" prefix to the cleanValue
+          const convertedValue: `0x${string}` = `0x${cleanValue}`;
+
           const storageAtPosition = await publicClient.getStorageAt({
-            address: address,
+            address: convertedValue,
             slot: toHex(idx),
           });
 

@@ -8,12 +8,15 @@ export function useAccountBalance(address?: string) {
   const [balance, setBalance] = useState<number | null>(null);
   const price = useGlobalState(state => state.nativeCurrencyPrice);
 
+  const cleanValue = address?.startsWith("0x") ? address.slice(2) : address;
+  const convertedValue: `0x${string}` = `0x${cleanValue}`;
+
   const {
     data: fetchedBalanceData,
     isError,
     isLoading,
   } = useBalance({
-    address,
+    address: convertedValue,
     watch: true,
     chainId: getTargetNetwork().id,
   });
