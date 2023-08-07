@@ -121,6 +121,12 @@ export const SwapComponent = ({ title }: { title: string }) => {
         tokenSendOut = new Token(chain.id, tokenOut?.address, Number(tokenOut?.decimals));
       }
 
+      // this is returning an error
+      const pairAddress: any = Pair.getAddress(tokenSendIn, tokenSendOut);
+      console.log("pairAddress", pairAddress);
+      // const cleanValue = pairAddress.startsWith("0x") ? pairAddress.slice(2) : pairAddress;
+      // pairAddress = `0x${cleanValue}`;
+
       const reserve: any = await provider.readContract({
         address: "0xC6AdB74CE2132561D2B9F28e0ee8605d997bD797",
         abi: IUniswapV2Pair.abi,
@@ -132,7 +138,6 @@ export const SwapComponent = ({ title }: { title: string }) => {
       const pair = new Pair(new TokenAmount(tokenSendIn, balances[0]), new TokenAmount(tokenSendOut, balances[1]));
 
       const route = new Route([pair], tokenSendIn);
-      console.log(route);
 
       const trade = new Trade(route, new TokenAmount(tokenSendIn, amountInWei), TradeType.EXACT_INPUT);
 
